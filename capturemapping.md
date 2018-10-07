@@ -32,4 +32,8 @@ if __name__ == '__main__':
     # read data from .csv file
     df = pd.read_csv('themappingfile.csv')# The type of 'df' is 'DataFrame'
 ```
+Anyway, I've put the CSV file in the repository and you can [download](./themappingfile.csv) and use it directly.  
+
 Then we can itegrate and manage the huge database through the `pandas` library of `Python`. Exceting~ 
+Thanks for reading!
+@author: llwang
