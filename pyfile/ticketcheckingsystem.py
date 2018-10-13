@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """
 Created on Mon Sep 24 16:27:01 2018
 
@@ -286,7 +286,7 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
                   + filteredData.columns[11].center(2,'-') + '|' )
             for i in range(len(filteredData)):
                 print(filteredData.iat[i, 0].ljust(5), end = '|')
-                print(filteredData.iat[i, 1].center(5), end = '|')# 军粮城北站
+                print(filteredData.iat[i, 1].center(5), end = '|')
                 print(filteredData.iat[i, 2].center(5), end = '|')
                 print(filteredData.iat[i, 3].center(5), end = '|')
                 print(filteredData.iat[i, 4].center(5), end = '|')
