@@ -1,6 +1,7 @@
 ﻿# -*- coding: utf-8 -*-
 """
 Created on Mon Sep 24 16:27:01 2018
+Update on Tuesday Nov 27 18:01:39 2018
 
 @author: llwang
 """
@@ -90,12 +91,13 @@ Select one('1' for the left one and '2' for the right one, OR ignore): "
         station.index = station.charactor
         from_station = station.loc[from_station_name, 'alpha']
         to_station = station.loc[to_station_name, 'alpha']
-        return "https://kyfw.12306.cn/otn/leftTicket/queryO?\
+        return "https://kyfw.12306.cn/otn/leftTicket/query?\
 leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
 &leftTicketDTO.to_station={}&purpose_codes=ADULT\
 ".format (train_date, from_station, to_station)# 该URL通过browser抓包得到，会变化，及时更新
-        # 2018年10月11日'...queryA?...'>>>'...queryO?...'
 
+        # 2018年10月11日'...queryA?...'>>>'...queryO?...'
+        # 2018年11月27日'...queryO?...'>>>'...query?...'
 
     
     def gain_information(self, results):
