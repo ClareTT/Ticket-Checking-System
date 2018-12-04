@@ -12,14 +12,14 @@ import pandas as pd
 import numpy as np
 from functools import reduce
 
-from functions import traindate
-from functions import fromstationname
-from functions import tostationname
-from functions import isfast
+from functions import get_trainstartingdate
+from functions import get_fromstationname
+from functions import get_tostationname
+from functions import is_fast
 from functions import text1
 from functions import text2
-from functions import gain_userInteraction
-from functions import isbegin_end
+from functions import gain_userinteraction
+from functions import judge_begin_end
 
 # https://www.cnblogs.com/yanfengt/p/6305542.html 全局变量的引用和修改
 stationNameMapping = pd.read_csv('themappingfile.csv')
@@ -27,36 +27,35 @@ stationNameMapping.columns = ['charactor', 'alpha']
 stationNameMapping.index = stationNameMapping.charactor
 
 
-class ticketcheckingsystem(object):
+class TicketCheckingSystem(object):
     "define a class of ticket checking system."
     def __init__(self):
-        self.results = self.getrawinformation()
-        self.informationTotal = self.gettraininformation()
+        self.results = self.get_rawinformation()
+        self.mapdata = self.results['data']['map']
+        self.informationTotal = self.get_traininformation()
         self.parameter = self.generate_filteruserselect()
         self.condition = self.generate_filterboolcolumn()
         
-        
-        
-    def printinfo(self):
+    def print_successinformation(self):
         print('\nInformation has been collected successfully!')
         print("\n1. 出发时间\t\t2. 到达时间\t\t3. 高速/普通\n\
 4. 出发站\t\t5. 到达站\n\nFiltering...")
     
-    def getrawinformation(self):
+    def get_rawinformation(self):
         """
         The first STEP, get train information:
             1. get the query URL
             2. crawl information
         """
         
-        url = self.getqueryurl()
+        url = self.get_queryurl()
         r = requests.get(url)
         results = json.loads(r.content)
         return results
         
 
     
-    def getqueryurl(self):
+    def get_queryurl(self):
         """
         获取查询存放数据url
         
@@ -68,19 +67,19 @@ class ticketcheckingsystem(object):
             2. generate query URL and return
         """
 
-        from_station = stationNameMapping.loc[fromstationname(), 'alpha']
-        to_station = stationNameMapping.loc[tostationname(), 'alpha']
+        from_station = stationNameMapping.loc[get_fromstationname(), 'alpha']
+        to_station = stationNameMapping.loc[get_tostationname(), 'alpha']
         queryUrl = "https://kyfw.12306.cn/otn/leftTicket/query?\
 leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
 &leftTicketDTO.to_station={}&purpose_codes=ADULT\
-".format (traindate(), from_station, to_station)# 该URL通过browser抓包得到，会变化，及时更新
+".format (get_trainstartingdate(), from_station, to_station)# 该URL通过browser抓包得到，会变化，及时更新
         return queryUrl
 
         # 2018年10月11日'...queryA?...'>>>'...queryO?...'
         # 2018年11月27日'...queryO?...'>>>'...query?...'
 
     
-    def gettraininformation(self):
+    def get_traininformation(self):
         """
         获取车次信息等
         
@@ -148,7 +147,7 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
         informationTotal['isVeryEnd'] = np.where(informationTotal['endCity'] 
                        == informationTotal['endName'], True, False)
         
-        informationTotal['isFast'] = isfast(informationTotal, 'TrainNum')
+        informationTotal['isFast'] = is_fast(informationTotal, 'TrainNum')
         informationTotal['isSlow'] = [not(x) for x in informationTotal.isFast]
         
         return informationTotal
@@ -232,52 +231,73 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
 
     
     def generate_filteruserselect(self):
-        mapdata = self.results['data']['map']
         
-        para1 = gain_userInteraction(text1(), '1234567')
-        para3 = gain_userInteraction(text2(), '12')
         
-        beginList = self.gotmap('beginName')
-        endList = self.gotmap('endName')
-        dfMap = pd.DataFrame({'出发':beginList})
-        dfMap = dfMap.append(pd.DataFrame({'到达':endList}))
-        print(dfMap)
-        
-        print('出发'.center(13, '-'))
-        for x in beginList:
-            print(x.ljust(3) + '|' + mapdata[x].ljust(10))
-        print('到达'.center(13, '-'))
-        for x in endList:
-            print(x.ljust(3) + '|' + mapdata[x].ljust(10))
-        
+        para1 = gain_userinteraction(text1(), '1234567')
+        para3 = gain_userinteraction(text2(), '12')
+        dfMap = self.generate_dfmap()
+        self.print_stationselect()
         while True:
             flag = 0
             para4_station = input("Press one station: ").upper()
             if para4_station == '':
                 para4_station = dfMap.iat[0, 0]
-                print(para4_station)
                 flag = 1
             try:
-                val = mapdata[para4_station]
+                val = self.mapdata[para4_station]
                 break
             except:
                 print('Error!! Please type again: ')
-        col = ['endName_map', 'beginName_map'][isbegin_end(dfMap, '出发', val)]# 有问题
+        col = ['endName_map', 'beginName_map'][judge_begin_end(dfMap, '出发', val)]# 有问题
         para4 = [col, val, flag]
         
         parameter = [para1, '1234567', para3, para4]
         
         return parameter
         
-    def gotmap(self, cols):
+    def generate_beginlist(self):
+        beginList = self.get_beginlist()
+        return beginList
+    def generate_endlist(self):
+        endList = self.get_endlist()
+        return endList
+    
+    
+    def generate_dfmap(self):
+        beginList = self.generate_beginlist()
+        endList = self.generate_endlist()
+        dfMap = pd.DataFrame({'出发':beginList})
+        dfMap = dfMap.append(pd.DataFrame({'到达':endList}))
+              
+        return dfMap
+    
+    def print_stationselect(self):
+        beginList = self.generate_beginlist()
+        endList = self.generate_endlist()
+        print('出发'.center(13, '-'))
+        for x in beginList:
+            print(x.ljust(3) + '|' + self.mapdata[x].ljust(10))
+        print('到达'.center(13, '-'))
+        for x in endList:
+            print(x.ljust(3) + '|' + self.mapdata[x].ljust(10))
+    
+    def get_beginlist(self):
         "得到该次搜索出发/到达车站名字列表"
         beginList = []
-        for x in self.informationTotal[cols]:
+        for x in self.informationTotal['beginName']:
             if (x not in beginList):
                 beginList = beginList + [x]
         return beginList
     
-    def gotfilter(self):
+    def get_endlist(self):
+        "得到该次搜索出发/到达车站名字列表"
+        endList = []
+        for x in self.informationTotal['endName']:
+            if (x not in endList):
+                endList = endList + [x]
+        return endList
+    
+    def get_filtereddata(self):
         columnNeeded = ['TrainNum', 'beginName_map', 'endName_map', 'beginTime', 
                     'endTime', 'diffTime', 'yw', 'yz', 'wz', 'erd', 'yd', 'sw']
         columnNeededMap = ['车次', '出发', '到达', '出发时', 
@@ -286,7 +306,7 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
         filteredData[columnNeededMap] = self.informationTotal.loc[self.condition, columnNeeded]
         return filteredData
     
-    def printresult(self, filteredData):
+    def print_result(self, filteredData):
         
         lstation = len(max([x for x in stationNameMapping.iloc[:,0]], key = len))
         
@@ -325,7 +345,7 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
                 
                 
                 
-    def printcatalog(self):
+    def print_catalog(self):
         a = input("Press Enter to search new routine. \n(E)exit system\n")
         return [False, True]['e' in a.lower()]
 
@@ -333,22 +353,22 @@ leftTicketDTO.train_date={}&leftTicketDTO.from_station={}\
 if __name__ == '__main__':
 
     while True:
-        ticket = ticketcheckingsystem()
+        ticket = TicketCheckingSystem()
         
         try:
             
-            ticket.printinfo()
+            ticket.print_successinformation()
             info = ticket.informationTotal
             condi = ticket.condition
             par = ticket.parameter
-            filteredData = ticket.gotfilter()
+            filteredData = ticket.get_filtereddata()
             
-            ticket.printresult(filteredData)
+            ticket.print_result(filteredData)
         except Exception as e:
             print(Exception,':',e)
             print('\nNetwork connection Error, Please check your network!')
             
-        if ticket.printcatalog():
+        if ticket.print_catalog():
             print('Thanks for using!')
             break
 
