@@ -25,24 +25,24 @@ def text2():
 Select one('1' for the left one and '2' for the right one, OR ignore): "
 
 
-def fromstationname():
+def get_fromstationname():
     return input("Where shall you START your travel(eg: '北京'): ")
 
-def tostationname():
+def get_tostationname():
     return input("And the Destination(eg: '上海'): ")
 
-def traindate():
+def get_trainstartingdate():
     dateNow = gain_nowtime()
     yearNow = dateNow[0:5]# 2018-
     return yearNow + input('When to go(FORMAT: ' + dateNow + '): ' + yearNow)
 
 
-def isbegin_end(dataframe, cols, val):
+def judge_begin_end(dataframe, cols, val):
     "判断是出发还是到达"
     a = dataframe[dataframe[cols] == val].index.tolist()# 无论输入，返回均为空？
     return [True, False][a == []]
 
-def isfast(dataframe, trainNum):
+def is_fast(dataframe, trainNum):
     "根据车次首字母判断是否为快速列车，返回bool列表"
     newList = []
     for x in dataframe[trainNum]:
@@ -50,7 +50,7 @@ def isfast(dataframe, trainNum):
         newList.append([False, True][('c' in x) | ('g' in x) | ('d' in x)])
     return newList
 
-def gain_userInteraction(s, defaultPara):
+def gain_userinteraction(s, defaultPara):
     while True:
         para1 = input(s)
         if para1 == '':
