@@ -358,9 +358,7 @@ if __name__ == '__main__':
         try:
             
             ticket.print_successinformation()
-            info = ticket.informationTotal
-            condi = ticket.condition
-            par = ticket.parameter
+            
             filteredData = ticket.get_filtereddata()
             
             ticket.print_result(filteredData)
